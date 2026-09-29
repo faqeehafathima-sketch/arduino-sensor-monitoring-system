@@ -136,7 +136,7 @@ Thresholds and dashboard settings can be adjusted near the top of `sensor_dashbo
 
 ## Authors
 
-**Faqeeha Fathima**  
+**FAQEEHA FATHIMA**  \
 **MUSHFIYA**
 
 B.Tech AI & Data Science
