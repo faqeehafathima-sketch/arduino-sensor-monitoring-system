@@ -134,8 +134,9 @@ Thresholds and dashboard settings can be adjusted near the top of `sensor_dashbo
 - Arduino hardware is required only for live sensor mode; demo mode works independently.
 - The repository does not include an Arduino firmware sketch because the uploaded project source contains the Python dashboard/serial consumer rather than the Arduino-side firmware.
 
-## Author
+## Authors
 
-**Faqeeha Fathima**
+**Faqeeha Fathima**  
+**MUSHFIYA**
 
 B.Tech AI & Data Science
