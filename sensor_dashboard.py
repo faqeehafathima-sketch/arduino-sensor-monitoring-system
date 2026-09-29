@@ -15,6 +15,9 @@ HOW TO RUN:
 DEMO MODE:
   Run without Arduino for expo simulation:
        python sensor_dashboard.py --demo
+
+The source is organized for readability and reliability while preserving the
+existing dashboard layout, styling, labels, and calculations.
 """
 
 import sys
@@ -33,12 +36,9 @@ import numpy as np
 import matplotlib as mpl
 mpl.rcParams['axes.unicode_minus'] = False
 import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import matplotlib.patches as mpatches
 from matplotlib.animation import FuncAnimation
-from matplotlib.patches import FancyBboxPatch
 import seaborn as sns
 from scipy.ndimage import gaussian_filter1d
 from scipy.stats import linregress
@@ -82,7 +82,7 @@ humidities   = deque(maxlen=MAX_POINTS)
 heat_indices = deque(maxlen=MAX_POINTS)
 reading_count = 0
 start_time    = time.time()
-alerts        = []
+alerts        = deque(maxlen=30)
 
 lock = threading.Lock()
 
@@ -132,7 +132,7 @@ def check_alerts(T, RH):
 # ─────────────────────────────────────────────
 def log_to_csv(ts, T, RH, HI, comfort):
     header = not os.path.exists(DATA_LOG_FILE)
-    with open(DATA_LOG_FILE, "a") as f:
+    with open(DATA_LOG_FILE, "a", encoding="utf-8", newline="") as f:
         if header:
             f.write("timestamp,temperature,humidity,heat_index,comfort\n")
         f.write(f"{ts},{T},{RH},{HI},{comfort}\n")
@@ -154,8 +154,10 @@ def serial_reader(port):
                 parts = line.split(",")
                 if len(parts) == 2:
                     try:
-                        T  = float(parts[0])
-                        RH = float(parts[1])
+                        T = float(parts[0].strip())
+                        RH = float(parts[1].strip())
+                        if not (math.isfinite(T) and math.isfinite(RH)):
+                            continue
                         HI = calc_heat_index(T, RH)
                         cs = comfort_score(T, RH)
                         ts = datetime.now().strftime("%H:%M:%S")
@@ -256,15 +258,26 @@ def build_figure():
     ax_hum    = fig.add_subplot(gs[0, 1])   # Humidity
     ax_hi     = fig.add_subplot(gs[1, 0])   # Heat Index
     ax_dist   = fig.add_subplot(gs[1, 1])   # Distribution KDE
+    ax_dist_hum = ax_dist.twinx()            # persistent humidity density axis
     ax_pred   = fig.add_subplot(gs[2, :])   # Prediction (full width)
     ax_bar    = fig.add_subplot(gs[3, 0])   # Bar Chart
     ax_scatter= fig.add_subplot(gs[3, 1])   # Scatter
     ax_gauge  = fig.add_subplot(gs[4, 0])   # Comfort Gauge
     ax_stats  = fig.add_subplot(gs[4, 1])   # Stats Table
 
-    axes = dict(temp=ax_temp, hum=ax_hum, hi=ax_hi,
-                dist=ax_dist, scatter=ax_scatter, pred=ax_pred,
-                bar=ax_bar, gauge=ax_gauge, stats=ax_stats)
+    axes = dict(
+        temp=ax_temp,
+        hum=ax_hum,
+        hi=ax_hi,
+        dist=ax_dist,
+        dist_hum=ax_dist_hum,
+        scatter=ax_scatter,
+        pred=ax_pred,
+        bar=ax_bar,
+        gauge=ax_gauge,
+        stats=ax_stats,
+        scatter_colorbar=None,
+    )
     return fig, axes
 
 
@@ -396,72 +409,100 @@ def plot_heat_index(ax, temps, hums, his):
 # ─────────────────────────────────────────────
 #  PLOT: KDE / Distribution
 # ─────────────────────────────────────────────
-def plot_distribution(ax, temps, hums):
+def plot_distribution(ax, hum_ax, temps, hums):
+    """Draw the temperature and humidity KDEs without stacking axes."""
     ax.cla()
+    hum_ax.cla()
     ax.set_facecolor(PANEL_COLOR)
+    hum_ax.set_facecolor(PANEL_COLOR)
+
     if len(temps) < 5:
-        ax.set_title("Distribution — collecting…", color=TEXT_COLOR); return
+        ax.set_title("Distribution — collecting…", color=TEXT_COLOR)
+        return
 
-    t_arr = np.array(temps)
-    h_arr = np.array(hums)
+    t_arr = np.asarray(temps, dtype=float)
+    h_arr = np.asarray(hums, dtype=float)
 
-    sns.kdeplot(t_arr, ax=ax, color=TEMP_COLOR, fill=True,
-                alpha=0.35, linewidth=2, label="Temp (°C)")
-    # Secondary axis for humidity
-    ax2 = ax.twinx()
-    ax2.set_facecolor(PANEL_COLOR)
-    sns.kdeplot(h_arr, ax=ax2, color=HUM_COLOR, fill=True,
-                alpha=0.25, linewidth=2, label="Humidity (%)")
+    sns.kdeplot(
+        t_arr, ax=ax, color=TEMP_COLOR, fill=True,
+        alpha=0.35, linewidth=2, label="Temp (°C)"
+    )
+    sns.kdeplot(
+        h_arr, ax=hum_ax, color=HUM_COLOR, fill=True,
+        alpha=0.25, linewidth=2, label="Humidity (%)"
+    )
 
-    # Mean lines
     ax.axvline(t_arr.mean(), color=TEMP_COLOR, linestyle="--", linewidth=1.2)
-    ax2.axvline(h_arr.mean(), color=HUM_COLOR, linestyle="--", linewidth=1.2)
+    hum_ax.axvline(h_arr.mean(), color=HUM_COLOR, linestyle="--", linewidth=1.2)
 
     ax.set_title("📊 Distribution (KDE)", color=TEXT_COLOR, pad=8,
                  fontsize=10, fontweight="bold")
     ax.set_xlabel("Value", color=MUTED_COLOR, fontsize=8)
     ax.set_ylabel("Density (Temp)", color=TEMP_COLOR, fontsize=8)
-    ax2.set_ylabel("Density (Hum)", color=HUM_COLOR, fontsize=8)
+    hum_ax.set_ylabel("Density (Hum)", color=HUM_COLOR, fontsize=8)
     ax.tick_params(colors=MUTED_COLOR)
-    ax2.tick_params(colors=MUTED_COLOR)
+    hum_ax.tick_params(colors=MUTED_COLOR)
+
     for sp in ax.spines.values():
         sp.set_edgecolor(BORDER_COLOR)
-    for sp in ax2.spines.values():
+    for sp in hum_ax.spines.values():
         sp.set_edgecolor(BORDER_COLOR)
 
     lines1, labels1 = ax.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax.legend(lines1 + lines2, labels1 + labels2, fontsize=7, loc="upper right",
-              facecolor=PANEL_COLOR, edgecolor=BORDER_COLOR, labelcolor=TEXT_COLOR)
+    lines2, labels2 = hum_ax.get_legend_handles_labels()
+    ax.legend(
+        lines1 + lines2, labels1 + labels2,
+        fontsize=7, loc="upper right",
+        facecolor=PANEL_COLOR, edgecolor=BORDER_COLOR, labelcolor=TEXT_COLOR
+    )
 
 
 # ─────────────────────────────────────────────
 #  PLOT: Scatter  Temp vs Humidity
 # ─────────────────────────────────────────────
-def plot_scatter(ax, temps, hums):
+def plot_scatter(ax, temps, hums, fig, state):
+    """Draw the scatter plot and keep only one recency colorbar."""
     ax.cla()
     ax.set_facecolor(PANEL_COLOR)
+
+    previous_colorbar = state.get("scatter_colorbar")
+    if previous_colorbar is not None:
+        # Colorbar.remove() can fail after ax.cla() on some Matplotlib versions.
+        colorbar_axes = previous_colorbar.ax
+        if colorbar_axes in fig.axes:
+            fig.delaxes(colorbar_axes)
+        state["scatter_colorbar"] = None
+
     if len(temps) < 5:
-        ax.set_title("Scatter — collecting…", color=TEXT_COLOR); return
+        ax.set_title("Scatter — collecting…", color=TEXT_COLOR)
+        return
 
-    t_arr = np.array(temps)
-    h_arr = np.array(hums)
-    ages  = np.linspace(0, 1, len(t_arr))   # colour by recency
+    t_arr = np.asarray(temps, dtype=float)
+    h_arr = np.asarray(hums, dtype=float)
+    ages = np.linspace(0, 1, len(t_arr))  # colour by recency
 
-    sc = ax.scatter(t_arr, h_arr, c=ages, cmap="plasma",
-                    s=30, alpha=0.7, edgecolors=BORDER_COLOR, linewidths=0.3)
-    cb = plt.colorbar(sc, ax=ax, fraction=0.035, pad=0.02)
-    cb.set_label("Recency", color=MUTED_COLOR, fontsize=7)
-    cb.ax.tick_params(colors=MUTED_COLOR, labelsize=7)
+    scatter = ax.scatter(
+        t_arr, h_arr, c=ages, cmap="plasma",
+        s=30, alpha=0.7, edgecolors=BORDER_COLOR, linewidths=0.3
+    )
 
-    # Regression line
+    colorbar = fig.colorbar(scatter, ax=ax, fraction=0.035, pad=0.02)
+    colorbar.set_label("Recency", color=MUTED_COLOR, fontsize=7)
+    colorbar.ax.tick_params(colors=MUTED_COLOR, labelsize=7)
+    state["scatter_colorbar"] = colorbar
+
     if len(t_arr) > 5:
-        m, b, r, *_ = linregress(t_arr, h_arr)
+        slope, intercept, r_value, *_ = linregress(t_arr, h_arr)
         x_line = np.linspace(t_arr.min(), t_arr.max(), 50)
-        ax.plot(x_line, m * x_line + b, color=AVG_COLOR,
-                linewidth=1.5, linestyle="--", label=f"R²={r**2:.2f}")
-        ax.legend(fontsize=7, facecolor=PANEL_COLOR,
-                  edgecolor=BORDER_COLOR, labelcolor=TEXT_COLOR)
+        ax.plot(
+            x_line, slope * x_line + intercept,
+            color=AVG_COLOR, linewidth=1.5, linestyle="--",
+            label=f"R²={r_value ** 2:.2f}"
+        )
+        ax.legend(
+            fontsize=7, facecolor=PANEL_COLOR,
+            edgecolor=BORDER_COLOR, labelcolor=TEXT_COLOR
+        )
 
     ax.set_title("🔵 Temp vs Humidity (Scatter)", color=TEXT_COLOR,
                  pad=8, fontsize=10, fontweight="bold")
@@ -488,10 +529,10 @@ def plot_bar(ax, temps, hums, ts_list):
     x   = np.arange(N)
     w   = 0.38
 
-    bars_t = ax.bar(x - w/2, t_s, w, color=TEMP_COLOR, alpha=0.85,
-                    label="Temp (°C)", edgecolor=PANEL_COLOR, linewidth=0.5)
-    bars_h = ax.bar(x + w/2, h_s, w, color=HUM_COLOR,  alpha=0.85,
-                    label="Humidity (%)", edgecolor=PANEL_COLOR, linewidth=0.5)
+    ax.bar(x - w/2, t_s, w, color=TEMP_COLOR, alpha=0.85,
+           label="Temp (°C)", edgecolor=PANEL_COLOR, linewidth=0.5)
+    ax.bar(x + w/2, h_s, w, color=HUM_COLOR, alpha=0.85,
+           label="Humidity (%)", edgecolor=PANEL_COLOR, linewidth=0.5)
 
     ax.set_xticks(x[::max(1, N//6)])
     ax.set_xticklabels([tsl[i] for i in range(0, N, max(1, N//6))],
@@ -571,8 +612,7 @@ def plot_stats(ax, temps, hums, his, reading_count):
 
     t_arr = np.array(temps)
     h_arr = np.array(hums)
-    hi_arr= np.array(his)
-    cs    = comfort_score(t_arr[-1], h_arr[-1])
+    hi_arr = np.array(his)
 
     rows = [
         ["Metric", "Temp (°C)", "Hum (%)", "HeatIdx"],
@@ -582,11 +622,6 @@ def plot_stats(ax, temps, hums, his, reading_count):
         ["Min",     f"{t_arr.min():.1f}", f"{h_arr.min():.1f}", f"{hi_arr.min():.1f}"],
         ["Std Dev", f"{t_arr.std():.2f}", f"{h_arr.std():.2f}", f"{hi_arr.std():.2f}"],
     ]
-
-    col_colors = [[PANEL_COLOR]*4 for _ in rows]
-    col_colors[0] = [BORDER_COLOR]*4   # header row
-
-    cell_colors = col_colors
 
     tbl = ax.table(
         cellText  = rows[1:],
@@ -638,8 +673,6 @@ def plot_prediction(ax, temps, hums):
         return
 
     t_arr = np.array(temps)
-    h_arr = np.array(hums)
-    x     = np.arange(len(t_arr))
 
     # Linear regression on last 20 points
     window = min(20, len(t_arr))
@@ -735,8 +768,8 @@ def update(frame, fig, axes):
     plot_time_series(axes["temp"],    t_snap, "Temperature", TEMP_COLOR, "°C", TEMP_HIGH, TEMP_LOW)
     plot_time_series(axes["hum"],     h_snap, "Humidity",    HUM_COLOR,  "%",  HUM_HIGH,  HUM_LOW)
     plot_heat_index (axes["hi"],      t_snap, h_snap, hi_snap)
-    plot_distribution(axes["dist"],   t_snap, h_snap)
-    plot_scatter    (axes["scatter"], t_snap, h_snap)
+    plot_distribution(axes["dist"], axes["dist_hum"], t_snap, h_snap)
+    plot_scatter    (axes["scatter"], t_snap, h_snap, fig, axes)
     plot_prediction (axes["pred"],    t_snap, h_snap)
     plot_bar        (axes["bar"],     t_snap, h_snap, ts_snap)
     plot_gauge      (axes["gauge"],   t_snap, h_snap)
@@ -747,17 +780,30 @@ def update(frame, fig, axes):
 #  PORT SELECTION
 # ─────────────────────────────────────────────
 def choose_port():
+    """Show available serial ports and return a validated selection."""
     import serial.tools.list_ports
+
     ports = list(serial.tools.list_ports.comports())
     if not ports:
         print("❌ No serial ports found. Use --demo mode.")
         sys.exit(1)
+
     print("\n📡 Available COM Ports:")
-    for i, p in enumerate(ports):
-        print(f"  [{i}]  {p.device}  —  {p.description}")
-    choice = input("\nEnter port number (or press Enter for [0]): ").strip()
-    idx = int(choice) if choice.isdigit() else 0
-    return ports[idx].device
+    for i, port in enumerate(ports):
+        print(f"  [{i}]  {port.device}  —  {port.description}")
+
+    while True:
+        choice = input("\nEnter port number (or press Enter for [0]): ").strip()
+
+        if choice == "":
+            return ports[0].device
+
+        if choice.isdigit():
+            index = int(choice)
+            if 0 <= index < len(ports):
+                return ports[index].device
+
+        print(f"Invalid selection. Enter a number from 0 to {len(ports) - 1}.")
 
 
 # ─────────────────────────────────────────────
@@ -789,7 +835,7 @@ def main():
     t.start()
     print("🚀 Dashboard launching… Close the window to exit.\n")
 
-    ani = FuncAnimation(
+    animation = FuncAnimation(
         fig, update,
         fargs=(fig, axes),
         interval=UPDATE_INTERVAL,
