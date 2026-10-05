@@ -1,7 +1,7 @@
 """
 ╔══════════════════════════════════════════════════════════════╗
 ║     🌡️  ARDUINO SENSOR MONITORING SYSTEM  v2.0              ║
-║     Real-Time IoT Data Acquisition & Analytics Dashboard     ║
+║     Real-Time Sensor Data Acquisition & Analytics Dashboard   ║
 ║     Built with Python | Seaborn | Matplotlib | Serial        ║
 ╚══════════════════════════════════════════════════════════════╝
 
@@ -263,7 +263,7 @@ def apply_dark_theme():
 # ─────────────────────────────────────────────
 def build_figure():
     fig = plt.figure(figsize=(22, 14), facecolor=BG_COLOR)
-    fig.canvas.manager.set_window_title("IoT Sensor Dashboard  |  Real-Time Monitor")
+    fig.canvas.manager.set_window_title("Sensor Dashboard  |  Real-Time Monitor")
 
     # Row 0: Temperature | Humidity          (2 panels)
     # Row 1: Heat Index  | Distribution      (2 panels)
@@ -838,7 +838,7 @@ def main():
 
     print("""
 ╔══════════════════════════════════════════════╗
-║   🌡️  Arduino IoT Sensor Dashboard  v2.0    ║
+║   🌡️  Arduino Sensor Dashboard  v2.1       ║
 ║   Real-Time Environmental Monitoring         ║
 ╚══════════════════════════════════════════════╝
     """)
