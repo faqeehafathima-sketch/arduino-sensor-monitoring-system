@@ -40,103 +40,62 @@ It also includes a demo mode, so the dashboard can be tested without connecting 
 
 ## Project Structure
 
-```text
 arduino-sensor-monitoring-system/
 ├── sensor_dashboard.py
 ├── sample_sensor_log.csv
 ├── requirements.txt
 ├── .gitignore
+├── docs/
+│   ├── Arduino_DHT11_Circuit_Diagram.svg
+│   └── HARDWARE_CONNECTION.md
 └── README.md
-```
+
+## Hardware
+
+The demonstrated hardware consists of an **Arduino board + DHT11 temperature/humidity sensor** connected to the laptop through USB serial communication.
+
+For the documented circuit and connection notes, see `docs/HARDWARE_CONNECTION.md`.
 
 ## Installation
 
 Clone the repository and install the dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+    pip install -r requirements.txt
 
 ## Run in Demo Mode
 
-You can run the dashboard without an Arduino:
-
-```bash
-python sensor_dashboard.py --demo
-```
+    python sensor_dashboard.py --demo
 
 The demo generator produces simulated temperature and humidity readings every 2 seconds.
 
 ## Run with Arduino
 
 1. Upload an Arduino sketch that reads the DHT11 sensor.
-2. Send readings over serial in this format:
-
-```text
-temperature,humidity
-```
-
-Example:
-
-```text
-28.2,67.1
-```
-
+2. Send readings over serial in the format `temperature,humidity`.
 3. Use a serial connection at **9600 baud**.
-4. Start the dashboard:
-
-```bash
-python sensor_dashboard.py
-```
-
+4. Start the dashboard with `python sensor_dashboard.py`.
 5. Select the available COM port when prompted.
 
 ## Analytics
 
-The dashboard calculates and visualizes:
-
-- Temperature and humidity trends
-- Heat index
-- Comfort score
-- Threshold-based alerts
-- Moving averages
-- Linear-regression trends
-- Distribution estimates
-- Temperature/humidity relationship
-- Basic next-10-reading linear forecast
-- Descriptive statistics
+The dashboard calculates and visualizes temperature/humidity trends, heat index, comfort score, threshold alerts, moving averages, linear-regression trends, distribution estimates, temperature/humidity relationship, a basic next-10-reading linear forecast, and descriptive statistics.
 
 The forecast is a simple linear-regression projection for demonstration and analytics purposes; it should not be treated as a production forecasting model.
 
 ## Data Logging
 
-Live readings are appended to:
-
-```text
-sensor_log.csv
-```
-
-The repository includes `sample_sensor_log.csv` as example data. The generated `sensor_log.csv` is ignored by Git so local runtime logs do not continuously change the repository.
-
-## Configuration
-
-Thresholds and dashboard settings can be adjusted near the top of `sensor_dashboard.py`, including:
-
-- Serial baud rate
-- Maximum chart points
-- Dashboard refresh interval
-- Temperature thresholds
-- Humidity thresholds
+Live readings are appended to `sensor_log.csv`. The repository includes `sample_sensor_log.csv` as example data.
 
 ## Notes
 
 - The project is designed as an educational/portfolio IoT analytics system.
 - Arduino hardware is required only for live sensor mode; demo mode works independently.
 - The repository does not include an Arduino firmware sketch because the uploaded project source contains the Python dashboard/serial consumer rather than the Arduino-side firmware.
+- The supplied demo footage was enhanced separately with audio removed and HD upscaling/sharpening. The original camera footage limits how much fine text detail can be recovered.
 
 ## Authors
 
-**FAQEEHA FATHIMA**  \
+**FAQEEHA FATHIMA**  \\
 **MUSHFIYA**
 
 B.Tech AI & Data Science
