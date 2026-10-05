@@ -1,36 +1,40 @@
-# Arduino Sensor Monitoring System — Hardware & Circuit Documentation
+# Arduino Sensor Monitoring System — Hardware Connection
 
-## Hardware Used
-
-The project demonstration used only:
+## Hardware actually used
 
 - Arduino board
 - DHT11 temperature/humidity sensor module
-- USB connection to the laptop for serial communication
+- USB cable to the laptop
 
-No additional display, LED, buzzer, breadboard, or other sensor is documented as part of the demonstrated hardware.
+No additional sensor, display, LED, buzzer, or other hardware is part of the demonstrated setup.
 
-## Connection
+## Wiring
 
-| Arduino | DHT11 |
+| DHT11 pin | Arduino |
 |---|---|
-| 5V | VCC |
-| D2 | DATA |
+| VCC | 5V |
+| DATA | D2 |
 | GND | GND |
 
-See the rendered circuit diagram: [Arduino DHT11 Circuit Diagram](./Arduino_DHT11_Circuit_Diagram.svg)
+## How the hardware reaches the software
 
-## Working Principle
+```text
+DHT11
+  ↓
+Arduino D2
+  ↓
+Arduino reads temperature + humidity
+  ↓
+USB serial connection
+  ↓
+Python sensor_dashboard.py
+```
 
-1. The DHT11 measures temperature and humidity.
-2. The Arduino reads the sensor values.
-3. The readings are transmitted to the computer through serial communication.
-4. The Python dashboard receives the values and performs analytics.
-5. The dashboard displays temperature, humidity, heat index, comfort score, trends, distributions, regression/scatter analysis, recent readings, statistics, and threshold alerts.
+## Serial contract
 
-## Serial Format
+**Baud rate:** 9600
 
-The Python dashboard expects:
+**Format:**
 
 ```text
 temperature,humidity
@@ -39,21 +43,23 @@ temperature,humidity
 Example:
 
 ```text
-28.2,67.1
+28.4,65.2
 ```
 
-Default serial speed: **9600 baud**.
+The first value is temperature in °C and the second is relative humidity in %.
 
-## Demonstration
+## Important package note
 
-The supplied demonstration video shows the DHT11 being exposed to a heat source and the laptop dashboard responding with environmental readings and analytics.
+This documentation assumes the **3-pin DHT11 module** used for the project documentation. A bare 4-pin DHT11 sensor can require different wiring and a pull-up resistor.
 
-## Accuracy Note
+## Pin-number accuracy note
 
-The original supplied video is 832×464 and does not clearly expose the Arduino board's pin labels. Therefore, the **D2 DATA connection is presented as the documented circuit choice for this diagram, not as a claim that D2 was visually verified from the original footage**.
+D2 is the documented connection used by the Arduino firmware and circuit documentation. The original supplied demonstration footage did not clearly expose the Arduino pin labels, so D2 was not visually verified from that video.
 
-The project source also identifies the system as an Arduino + DHT11 serial dashboard but does not contain the original Arduino firmware sketch.
+## Software boundary
 
-## Media
+The Arduino reads the sensor.
 
-The cleaned/enhanced HD demonstration video was produced separately from the original footage with audio removed and visual sharpening/upscaling applied. The source footage itself limits how much fine text detail can be recovered.
+The Python application receives the serial values and performs the analytics and visualization.
+
+The laptop/USB cable is the communication path; it is not an additional sensing component.
