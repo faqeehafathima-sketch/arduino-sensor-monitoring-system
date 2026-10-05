@@ -42,6 +42,7 @@ from matplotlib.animation import FuncAnimation
 import seaborn as sns
 from scipy.ndimage import gaussian_filter1d
 from scipy.stats import linregress
+from sklearn.ensemble import IsolationForest
 
 # ─────────────────────────────────────────────
 #  GLOBAL CONFIGURATION
@@ -125,6 +126,32 @@ def check_alerts(T, RH):
     if RH > HUM_HIGH:  msgs.append(f"💧 HIGH HUMIDITY: {RH:.1f}%")
     if RH < HUM_LOW:   msgs.append(f"🌵 LOW HUMIDITY: {RH:.1f}%")
     return msgs
+
+def detect_anomaly(temps, hums):
+    """Use recent sensor history to flag an unusual latest reading."""
+    if len(temps) < 30:
+        return "WARMING UP", None
+
+    history = np.column_stack((
+        np.asarray(temps[:-1], dtype=float),
+        np.asarray(hums[:-1], dtype=float),
+    ))
+    latest = np.asarray([[float(temps[-1]), float(hums[-1])]])
+
+    model = IsolationForest(
+        n_estimators=100,
+        contamination=0.05,
+        random_state=42,
+    )
+    model.fit(history)
+
+    score = float(model.decision_function(latest)[0])
+    prediction = int(model.predict(latest)[0])
+
+    # Use the model label plus a conservative score threshold so normal
+    # edge-of-range readings are not over-reported as anomalies.
+    status = "ANOMALY" if prediction == -1 and score < -0.05 else "NORMAL"
+    return status, score
 
 
 # ─────────────────────────────────────────────
@@ -276,7 +303,6 @@ def build_figure():
         bar=ax_bar,
         gauge=ax_gauge,
         stats=ax_stats,
-        scatter_colorbar=None,
     )
     return fig, axes
 
@@ -460,18 +486,10 @@ def plot_distribution(ax, hum_ax, temps, hums):
 # ─────────────────────────────────────────────
 #  PLOT: Scatter  Temp vs Humidity
 # ─────────────────────────────────────────────
-def plot_scatter(ax, temps, hums, fig, state):
-    """Draw the scatter plot and keep only one recency colorbar."""
+def plot_scatter(ax, temps, hums):
+    """Draw the scatter plot without accumulating colorbars."""
     ax.cla()
     ax.set_facecolor(PANEL_COLOR)
-
-    previous_colorbar = state.get("scatter_colorbar")
-    if previous_colorbar is not None:
-        # Colorbar.remove() can fail after ax.cla() on some Matplotlib versions.
-        colorbar_axes = previous_colorbar.ax
-        if colorbar_axes in fig.axes:
-            fig.delaxes(colorbar_axes)
-        state["scatter_colorbar"] = None
 
     if len(temps) < 5:
         ax.set_title("Scatter — collecting…", color=TEXT_COLOR)
@@ -485,11 +503,6 @@ def plot_scatter(ax, temps, hums, fig, state):
         t_arr, h_arr, c=ages, cmap="plasma",
         s=30, alpha=0.7, edgecolors=BORDER_COLOR, linewidths=0.3
     )
-
-    colorbar = fig.colorbar(scatter, ax=ax, fraction=0.035, pad=0.02)
-    colorbar.set_label("Recency", color=MUTED_COLOR, fontsize=7)
-    colorbar.ax.tick_params(colors=MUTED_COLOR, labelsize=7)
-    state["scatter_colorbar"] = colorbar
 
     if len(t_arr) > 5:
         slope, intercept, r_value, *_ = linregress(t_arr, h_arr)
@@ -600,7 +613,7 @@ def plot_gauge(ax, temps, hums):
 # ─────────────────────────────────────────────
 #  PLOT: Stats table
 # ─────────────────────────────────────────────
-def plot_stats(ax, temps, hums, his, reading_count):
+def plot_stats(ax, temps, hums, his, reading_count, anomaly_status, anomaly_score):
     ax.cla()
     ax.set_facecolor(PANEL_COLOR)
     ax.axis("off")
@@ -648,8 +661,14 @@ def plot_stats(ax, temps, hums, his, reading_count):
         ax.text(0.5, 0.18 - i * 0.10, msg, ha="center", color=col,
                 fontsize=8, transform=ax.transAxes)
 
-    ax.text(0.5, -0.04, f"📡 Total Readings: {reading_count}  |  Log: {DATA_LOG_FILE}",
-            ha="center", color=MUTED_COLOR, fontsize=7.5, transform=ax.transAxes)
+    anomaly_text = f"ML anomaly check: {anomaly_status}"
+    if anomaly_score is not None:
+        anomaly_text += f"  |  score: {anomaly_score:+.3f}"
+    anomaly_color = ALERT_COLOR if anomaly_status == "ANOMALY" else HUM_COLOR
+    ax.text(0.5, -0.04, anomaly_text, ha="center", color=anomaly_color,
+            fontsize=7.5, transform=ax.transAxes)
+    ax.text(0.5, -0.11, f"📡 Total Readings: {reading_count}  |  Log: {DATA_LOG_FILE}",
+            ha="center", color=MUTED_COLOR, fontsize=7.0, transform=ax.transAxes)
 
     ax.set_title("📋 Live Statistics", color=TEXT_COLOR, pad=8,
                  fontsize=10, fontweight="bold")
@@ -763,6 +782,7 @@ def update(frame, fig, axes):
         ts_snap = list(timestamps)
         rc      = reading_count
 
+    anomaly_status, anomaly_score = detect_anomaly(t_snap, h_snap)
     uptime = time.time() - start_time
 
     draw_header(fig, rc, uptime)
@@ -770,11 +790,11 @@ def update(frame, fig, axes):
     plot_time_series(axes["hum"],     h_snap, "Humidity",    HUM_COLOR,  "%",  HUM_HIGH,  HUM_LOW)
     plot_heat_index (axes["hi"],      t_snap, h_snap, hi_snap)
     plot_distribution(axes["dist"], axes["dist_hum"], t_snap, h_snap)
-    plot_scatter    (axes["scatter"], t_snap, h_snap, fig, axes)
+    plot_scatter    (axes["scatter"], t_snap, h_snap)
     plot_prediction (axes["pred"],    t_snap, h_snap)
     plot_bar        (axes["bar"],     t_snap, h_snap, ts_snap)
     plot_gauge      (axes["gauge"],   t_snap, h_snap)
-    plot_stats      (axes["stats"],   t_snap, h_snap, hi_snap, rc)
+    plot_stats      (axes["stats"],   t_snap, h_snap, hi_snap, rc, anomaly_status, anomaly_score)
 
 
 # ─────────────────────────────────────────────
