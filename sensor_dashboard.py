@@ -673,6 +673,7 @@ def plot_prediction(ax, temps, hums):
         return
 
     t_arr = np.array(temps)
+    h_arr = np.array(hums)
 
     # Linear regression on last 20 points
     window = min(20, len(t_arr))
