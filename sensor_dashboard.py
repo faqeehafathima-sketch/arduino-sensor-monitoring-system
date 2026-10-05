@@ -129,7 +129,7 @@ def check_alerts(T, RH):
 
 def detect_anomaly(temps, hums):
     """Use recent sensor history to flag an unusual latest reading."""
-    if len(temps) < 30:
+    if len(temps) < 40:
         return "WARMING UP", None
 
     history = np.column_stack((
