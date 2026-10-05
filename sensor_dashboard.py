@@ -121,10 +121,10 @@ def comfort_score(T, RH):
 # ─────────────────────────────────────────────
 def check_alerts(T, RH):
     msgs = []
-    if T > TEMP_HIGH:  msgs.append(f"🔴 HIGH TEMP: {T:.1f}°C")
-    if T < TEMP_LOW:   msgs.append(f"🔵 LOW TEMP: {T:.1f}°C")
-    if RH > HUM_HIGH:  msgs.append(f"💧 HIGH HUMIDITY: {RH:.1f}%")
-    if RH < HUM_LOW:   msgs.append(f"🌵 LOW HUMIDITY: {RH:.1f}%")
+    if T > TEMP_HIGH:  msgs.append(f"HIGH TEMP: {T:.1f}°C")
+    if T < TEMP_LOW:   msgs.append(f"LOW TEMP: {T:.1f}°C")
+    if RH > HUM_HIGH:  msgs.append(f"HIGH HUMIDITY: {RH:.1f}%")
+    if RH < HUM_LOW:   msgs.append(f"LOW HUMIDITY: {RH:.1f}%")
     return msgs
 
 def detect_anomaly(temps, hums):
@@ -421,7 +421,7 @@ def plot_heat_index(ax, temps, hums, his):
     ax.annotate(f"  {raw[-1]:.1f}°C", xy=(x[-1], raw[-1]),
                 color=FEEL_COLOR, fontsize=10, fontweight="bold", va="center")
 
-    ax.set_title(f"🌤 Feels-Like (Heat Index)  |  {raw[-1]:.1f}°C",
+    ax.set_title(f"Feels-Like (Heat Index)  |  {raw[-1]:.1f}°C",
                  color=TEXT_COLOR, pad=8, fontsize=10, fontweight="bold")
     ax.set_ylabel("Heat Index (°C)", color=MUTED_COLOR, fontsize=8)
     ax.set_xlabel("Reading #", color=MUTED_COLOR, fontsize=8)
@@ -461,7 +461,7 @@ def plot_distribution(ax, hum_ax, temps, hums):
     ax.axvline(t_arr.mean(), color=TEMP_COLOR, linestyle="--", linewidth=1.2)
     hum_ax.axvline(h_arr.mean(), color=HUM_COLOR, linestyle="--", linewidth=1.2)
 
-    ax.set_title("📊 Distribution (KDE)", color=TEXT_COLOR, pad=8,
+    ax.set_title("Distribution (KDE)", color=TEXT_COLOR, pad=8,
                  fontsize=10, fontweight="bold")
     ax.set_xlabel("Value", color=MUTED_COLOR, fontsize=8)
     ax.set_ylabel("Density (Temp)", color=TEMP_COLOR, fontsize=8)
@@ -517,7 +517,7 @@ def plot_scatter(ax, temps, hums):
             edgecolor=BORDER_COLOR, labelcolor=TEXT_COLOR
         )
 
-    ax.set_title("🔵 Temp vs Humidity (Scatter)", color=TEXT_COLOR,
+    ax.set_title("Temp vs Humidity (Scatter)", color=TEXT_COLOR,
                  pad=8, fontsize=10, fontweight="bold")
     ax.set_xlabel("Temperature (°C)", color=MUTED_COLOR, fontsize=8)
     ax.set_ylabel("Humidity (%)", color=MUTED_COLOR, fontsize=8)
@@ -550,7 +550,7 @@ def plot_bar(ax, temps, hums, ts_list):
     ax.set_xticks(x[::max(1, N//6)])
     ax.set_xticklabels([tsl[i] for i in range(0, N, max(1, N//6))],
                        rotation=30, fontsize=7, color=MUTED_COLOR)
-    ax.set_title(f"📈 Last {N} Readings (Bar Chart)", color=TEXT_COLOR,
+    ax.set_title(f"Last {N} Readings (Bar Chart)", color=TEXT_COLOR,
                  pad=8, fontsize=10, fontweight="bold")
     ax.set_ylabel("Value", color=MUTED_COLOR, fontsize=8)
     ax.legend(fontsize=7, loc="upper right",
@@ -606,7 +606,7 @@ def plot_gauge(ax, temps, hums):
     ax.text(0.92, -0.12, "100", fontsize=8, color=MUTED_COLOR)
     ax.set_xlim(-1.2, 1.2)
     ax.set_ylim(-0.6, 1.1)
-    ax.set_title("😊 Comfort Gauge", color=TEXT_COLOR, pad=6,
+    ax.set_title("Comfort Gauge", color=TEXT_COLOR, pad=6,
                  fontsize=10, fontweight="bold")
 
 
@@ -653,8 +653,8 @@ def plot_stats(ax, temps, hums, his, reading_count, anomaly_status, anomaly_scor
                             fontweight="bold" if r == 0 else "normal")
 
     # Alert messages
-    latest_alerts = alerts[-3:] if alerts else ["✅ All values nominal"]
-    ax.text(0.5, 0.26, "⚠ Alerts", ha="center", color=MUTED_COLOR,
+    latest_alerts = alerts[-3:] if alerts else ["All values nominal"]
+    ax.text(0.5, 0.26, "Alerts", ha="center", color=MUTED_COLOR,
             fontsize=9, transform=ax.transAxes)
     for i, msg in enumerate(latest_alerts):
         col = ALERT_COLOR if "🔴" in msg or "🔵" in msg or "💧" in msg or "🌵" in msg else HUM_COLOR
@@ -667,10 +667,10 @@ def plot_stats(ax, temps, hums, his, reading_count, anomaly_status, anomaly_scor
     anomaly_color = ALERT_COLOR if anomaly_status == "ANOMALY" else HUM_COLOR
     ax.text(0.5, -0.04, anomaly_text, ha="center", color=anomaly_color,
             fontsize=7.5, transform=ax.transAxes)
-    ax.text(0.5, -0.11, f"📡 Total Readings: {reading_count}  |  Log: {DATA_LOG_FILE}",
+    ax.text(0.5, -0.11, f"Total Readings: {reading_count}  |  Log: {DATA_LOG_FILE}",
             ha="center", color=MUTED_COLOR, fontsize=7.0, transform=ax.transAxes)
 
-    ax.set_title("📋 Live Statistics", color=TEXT_COLOR, pad=8,
+    ax.set_title("Live Statistics", color=TEXT_COLOR, pad=8,
                  fontsize=10, fontweight="bold")
 
 
