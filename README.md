@@ -297,11 +297,11 @@ The dashboard waits until enough readings are available before drawing the next-
 
 ## What this project is—and is not
 
-This is an educational/portfolio IoT analytics system.
+This is an educational/portfolio sensor analytics system.
 
 It demonstrates the complete path from a physical sensor to a desktop analytics dashboard:
 
-**sensor → microcontroller → serial communication → Python data processing → visualization**
+**sensor → microcontroller → serial communication → Python data processing → ML anomaly detection → visualization**
 
 It is not presented as an industrial environmental monitoring product or a trained predictive-AI system.
 
