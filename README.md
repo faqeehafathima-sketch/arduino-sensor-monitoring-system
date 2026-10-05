@@ -13,7 +13,7 @@ The DHT11 measures:
 
 The Arduino reads those two values and sends them to the laptop over USB serial.
 
-The Python application receives the readings and builds the live dashboard. It also calculates additional analytics such as heat index, a project-specific comfort score, threshold alerts, trends, distributions, regression, statistics, a simple short-horizon forecast, and a lightweight ML anomaly check using Isolation Forest.
+The Python application receives the readings and builds the live dashboard. It also calculates additional analytics such as heat index, a project-specific comfort score, threshold alerts, trends, distributions, regression, statistics, and a simple short-horizon forecast.
 
 ### Overall flow
 
@@ -205,15 +205,8 @@ The dashboard currently provides:
 - Comfort gauge
 - Mean, minimum, maximum, and standard deviation
 - Next-10-reading forecast
-- ML anomaly detection using Isolation Forest
 
-## 7. ML anomaly detection
-
-The dashboard uses **Isolation Forest** on the recent temperature/humidity history to flag an unusual latest reading. The model is retrained from the current rolling history as new data arrives.
-
-The detector is an educational anomaly-detection feature, not a safety-certified alarm system. Its result depends on the amount and variability of the collected data. The dashboard intentionally waits for enough readings before showing a model result.
-
-## 8. Important limitation: the forecast
+## 7. Important limitation: the forecast
 
 The forecast is a **simple linear-regression projection** over recent readings.
 
@@ -221,13 +214,13 @@ It is not a trained machine-learning model.
 
 It is included as a lightweight analytics feature and should be described honestly in demonstrations and presentations.
 
-## 9. Important limitation: comfort score
+## 8. Important limitation: comfort score
 
 The comfort score is a project-specific heuristic calculated from temperature and humidity.
 
 It is not an official medical measurement or environmental safety standard.
 
-## 10. Data logging
+## 9. Data logging
 
 Live readings are written to:
 
@@ -256,7 +249,6 @@ That file is example/sample data for the project.
 - Install the required DHT library before compiling.
 - Use demo mode when hardware is unavailable.
 - Describe the forecast as linear regression, not AI.
-- Describe the anomaly detector as ML-based anomaly detection, not a trained predictive model.
 - Describe the comfort score as a project-specific heuristic.
 - Keep the hardware description limited to hardware actually used.
 
@@ -297,11 +289,11 @@ The dashboard waits until enough readings are available before drawing the next-
 
 ## What this project is—and is not
 
-This is an educational/portfolio sensor analytics system.
+This is an educational/portfolio IoT analytics system.
 
 It demonstrates the complete path from a physical sensor to a desktop analytics dashboard:
 
-**sensor → microcontroller → serial communication → Python data processing → ML anomaly detection → visualization**
+**sensor → microcontroller → serial communication → Python data processing → visualization**
 
 It is not presented as an industrial environmental monitoring product or a trained predictive-AI system.
 
