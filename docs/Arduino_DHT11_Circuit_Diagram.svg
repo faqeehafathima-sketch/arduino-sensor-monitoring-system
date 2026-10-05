@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800">
+<rect width="1400" height="800" fill="#f7f8fa"/>
+<text x="700" y="70" text-anchor="middle" font-family="Arial" font-size="34" font-weight="700">Arduino + DHT11 Sensor Connection</text>
+<text x="700" y="110" text-anchor="middle" font-family="Arial" font-size="18" fill="#555">Hardware used: Arduino board and DHT11 temperature/humidity sensor module</text>
+<rect x="120" y="190" width="520" height="420" rx="24" fill="#e8eef7" stroke="#333" stroke-width="4"/>
+<text x="380" y="250" text-anchor="middle" font-family="Arial" font-size="30" font-weight="700">Arduino UNO</text>
+<rect x="210" y="300" width="340" height="230" rx="12" fill="#d9dde3" stroke="#333" stroke-width="3"/>
+<text x="380" y="390" text-anchor="middle" font-family="Arial" font-size="25">5V</text>
+<text x="380" y="455" text-anchor="middle" font-family="Arial" font-size="25">D2 (DATA)</text>
+<text x="380" y="520" text-anchor="middle" font-family="Arial" font-size="25">GND</text>
+<rect x="900" y="250" width="330" height="300" rx="24" fill="#fff3df" stroke="#333" stroke-width="4"/>
+<text x="1065" y="315" text-anchor="middle" font-family="Arial" font-size="30" font-weight="700">DHT11 Module</text>
+<circle cx="1065" cy="390" r="45" fill="#9aa0a6" stroke="#333" stroke-width="3"/>
+<text x="1065" y="402" text-anchor="middle" font-family="Arial" font-size="22">DHT11</text>
+<text x="1065" y="480" text-anchor="middle" font-family="Arial" font-size="22">VCC • DATA • GND</text>
+<line x1="550" y1="390" x2="900" y2="390" stroke="#c33" stroke-width="8"/>
+<text x="725" y="370" text-anchor="middle" font-family="Arial" font-size="20" fill="#a00">5V → VCC</text>
+<line x1="550" y1="455" x2="900" y2="455" stroke="#1677c8" stroke-width="8"/>
+<text x="725" y="435" text-anchor="middle" font-family="Arial" font-size="20" fill="#075b9e">D2 → DATA</text>
+<line x1="550" y1="520" x2="900" y2="520" stroke="#333" stroke-width="8"/>
+<text x="725" y="500" text-anchor="middle" font-family="Arial" font-size="20">GND → GND</text>
+<rect x="210" y="660" width="980" height="75" rx="12" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="700" y="690" text-anchor="middle" font-family="Arial" font-size="17" font-weight="700">Documentation note</text>
+<text x="700" y="716" text-anchor="middle" font-family="Arial" font-size="15" fill="#555">D2 is the documented diagram connection; the supplied video/project files do not clearly verify the original data-pin number.</text>
+</svg>
