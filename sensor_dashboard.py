@@ -150,7 +150,7 @@ def detect_anomaly(temps, hums):
 
     # Use the model label plus a conservative score threshold so normal
     # edge-of-range readings are not over-reported as anomalies.
-    status = "ANOMALY" if prediction == -1 and score < -0.05 else "NORMAL"
+    status = "ANOMALY" if prediction == -1 and score < -0.09 else "NORMAL"
     return status, score
 
 
