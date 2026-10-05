@@ -4,4 +4,3 @@ matplotlib
 seaborn
 scipy
 pyserial
-scikit-learn
